@@ -1,5 +1,5 @@
 
-// Simple Discord notifier
+// Discord visit notifier
 exports.handler = async (event) => {
   if (event.httpMethod === 'GET') {
     return { statusCode: 200, body: 'ok: visit-alert live' };
@@ -14,7 +14,12 @@ exports.handler = async (event) => {
   if (!webhook) return { statusCode: 500, body: 'Missing DISCORD_WEBHOOK_URL env var' };
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch {}
-  const content = `👀 Visit: ${body.url || ''} | ${body.referrer || ''}`;
+  const ua = (event.headers && (event.headers['user-agent'] || event.headers['User-Agent'])) || '';
+  const content = `👀 **New Visit**
+• URL: ${body.url || ''}
+• Referrer: ${body.referrer || ''}
+• UA: ${ua}
+• Time: ${body.ts || new Date().toISOString()} (${body.tz || ''})`;
   try {
     const res = await fetch(webhook, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ content }) });
     if (!res.ok) throw new Error(`Discord ${res.status}`);

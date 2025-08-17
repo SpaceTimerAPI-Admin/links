@@ -1,7 +1,241 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>Functions PlainJS</title></head>
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Friend Request</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #121212; color: #f2f2f2;
+      overflow: hidden;
+      display: flex; justify-content: center;
+      align-items: center; flex-direction: column;
+    }
+    #matrixCanvas, #starCanvas {
+  z-index: 20;
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: transparent;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #starCanvas { z-index: 0; }
+    .screen {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    .active { display: flex; }
+    .visible { opacity: 1; }
+    .title {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #ffffff;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    .glitch {
+      animation: glitch-animation 0.3s infinite;
+    }
+    @keyframes glitch-animation {
+      0% { text-shadow: 2px 0 red, -2px 0 blue; transform: translate(1px, -1px); }
+      20% { text-shadow: -2px 0 red, 2px 0 blue; transform: translate(-1px, 1px); }
+      40% { text-shadow: 1px 0 green, -1px 0 magenta; transform: translate(1px, 1px); }
+      60% { text-shadow: -1px 0 red, 1px 0 blue; transform: translate(-1px, -1px); }
+      80% { text-shadow: 2px 0 green, -2px 0 red; transform: translate(2px, 0); }
+      100% { text-shadow: -2px 0 blue, 2px 0 red; transform: translate(0, 0); }
+    }
+    .loader {
+      border: 6px solid #2c2c2c;
+      border-top: 6px solid #f2f2f2;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      animation: spin 1s linear infinite;
+      margin-top: 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .button {
+      padding: 16px 28px;
+      margin: 12px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background-color: #4a90e2;
+      color: white;
+      cursor: pointer;
+      width: 90%;
+      max-width: 400px;
+      transition: background-color 0.3s, transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+      display: block;
+    }
+    .button:hover {
+      background-color: #357ab8;
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(74, 144, 226, 0.5);
+    }
+  
+.flip-card {
+  background-color: transparent;
+  width: 90%;
+  max-width: 400px;
+  height: 60px;
+  perspective: 1000px;
+  margin: 12px;
+}
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+.flip-card.flip .flip-card-inner {
+  transform: rotateY(180deg);
+}
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+</style>
+</head>
 <body>
-<h1>Functions PlainJS</h1>
-<p>Try <a href="/ping">/ping</a> and <code>/.netlify/functions/ping</code>.</p>
+<canvas id="starCanvas"></canvas>
+<div class="screen active visible" id="profileScreen">
+<div style="width: 200px; height: 200px; border-radius: 50%; background-image: url('489928677_9898212560243530_4289419829551560108_n.jpg'); background-size: cover; background-position: center; margin-bottom: 30px; border: 5px solid #4a90e2;"></div><h2 style="margin: 15px 0; color: #4a90e2; font-size: 1.2rem;">Contact@AnthonyMcHugh.com</h2>
+
+<a class="button" href="https://snapchat.com/t/78HjYjMU">Snapchat</a><a class="button" href="https://www.instagram.com/AnthonyMcHugh__">Instagram</a><a class="button" href="https://www.tiktok.com/@AnthonyMcHugh_">TikTok</a>
+</div>
+<canvas id="matrixCanvas"></canvas>
+<script>
+    const matrixCanvas = document.getElementById('matrixCanvas');
+    const ctx = matrixCanvas.getContext('2d');
+matrixCanvas.width = window.innerWidth * window.devicePixelRatio;
+matrixCanvas.height = window.innerHeight * window.devicePixelRatio;
+ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const fontSize = 14;
+    const matrixSymbols = Array.from({length: 300}, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      speed: Math.random() * 3 + 1
+    }));
+    function resizeMatrix() {
+      matrixCanvas.width = window.innerWidth;
+      matrixCanvas.height = window.innerHeight;
+    }
+    function drawMatrix() {
+      ctx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+      ctx.fillStyle = 'rgba(18, 18, 18, 0.1)';
+      ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+      ctx.fillStyle = '#00aaff';
+      ctx.font = fontSize + 'px monospace';
+      matrixSymbols.forEach(s => {
+        const char = String.fromCharCode(0x30A0 + Math.random() * 96);
+        ctx.fillText(char, s.x, s.y);
+        s.y += s.speed * fontSize;
+        if (s.y > matrixCanvas.height) {
+          s.y = 0;
+          s.x = Math.random() * matrixCanvas.width;
+        }
+      });
+    }
+    function playMatrix(duration = 1200) {
+      matrixCanvas.style.display = 'block';
+      document.getElementById('glitchTitle').classList.add('glitch');
+      const interval = setInterval(drawMatrix, 50);
+      setTimeout(() => {
+        clearInterval(interval);
+        matrixCanvas.style.display = 'none';
+        document.getElementById('glitchTitle').classList.remove('glitch');
+        document.getElementById('introScreen').classList.remove('active', 'visible');
+        const profile = document.getElementById('profileScreen');
+        profile.classList.add('active', 'visible');
+      }, duration);
+    }
+    setTimeout(() => playMatrix(1200), 3000);
+
+    // Shooting stars
+    const starCanvas = document.getElementById('starCanvas');
+    const starCtx = starCanvas.getContext('2d');
+    let stars = [];
+    function resizeStars() {
+      starCanvas.width = window.innerWidth;
+      starCanvas.height = window.innerHeight;
+    }
+    function createStar() {
+      return {
+        x: Math.random() * starCanvas.width,
+        y: Math.random() * starCanvas.height,
+        vx: Math.random() * 5 + 3,
+        vy: Math.random() * 2 - 1,
+        length: Math.random() * 100 + 40,
+        opacity: 1.0,
+        fade: 0.01 + Math.random() * 0.02
+      };
+    }
+    function drawStars() {
+      starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+      stars.forEach((star, i) => {
+        starCtx.beginPath();
+        const grad = starCtx.createLinearGradient(star.x, star.y, star.x - star.length, star.y);
+        grad.addColorStop(0, `rgba(0, 160, 255, ${star.opacity})`);
+        grad.addColorStop(1, `rgba(0, 160, 255, 0)`);
+        starCtx.strokeStyle = grad;
+        starCtx.lineWidth = 2;
+        starCtx.moveTo(star.x, star.y);
+        starCtx.lineTo(star.x - star.length, star.y);
+        starCtx.stroke();
+        star.x += star.vx;
+        star.y += star.vy;
+        star.opacity -= star.fade;
+        if (star.opacity <= 0) stars.splice(i, 1);
+      });
+      if (Math.random() < 0.2) stars.push(createStar());
+      requestAnimationFrame(drawStars);
+    }
+    window.addEventListener('resize', resizeStars);
+    resizeStars(); drawStars();
+    
+  
+function copyEmail() {
+  navigator.clipboard.writeText("Contact@AnthonyMcHugh.com").then(function() {
+    alert("Email copied to clipboard!");
+  });
+}
+
+document.querySelectorAll(".flip-card").forEach(card => {
+  card.addEventListener("click", () => {
+    card.classList.toggle("flip");
+  });
+});
+</script>
+
 <script>
   (function () {
     const payload = {
@@ -12,13 +246,23 @@
       ua: navigator.userAgent
     };
     const endpoint = "/.netlify/functions/visit-alert";
+    function send() {
+      return fetch(endpoint, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload),
+        keepalive: true
+      }).catch(()=>{});
+    }
     try {
       const ok = navigator.sendBeacon && navigator.sendBeacon(
         endpoint,
         new Blob([JSON.stringify(payload)], { type: "application/json" })
       );
-      if (!ok) fetch(endpoint, {method:"POST", headers:{"Content-Type": "application/json"}, body: JSON.stringify(payload), keepalive:true});
-    } catch (e) {}
+      if (!ok) send();
+    } catch (e) { send(); }
   })();
 </script>
-</body></html>
+
+</body>
+</html>
