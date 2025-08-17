@@ -1,5 +1,24 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>Webhook Test</title></head>
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Functions PlainJS</title></head>
 <body>
-<h1>Webhook Test</h1>
+<h1>Functions PlainJS</h1>
 <p>Try <a href="/ping">/ping</a> and <code>/.netlify/functions/ping</code>.</p>
+<script>
+  (function () {
+    const payload = {
+      url: location.href,
+      referrer: document.referrer || null,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+      ts: new Date().toISOString(),
+      ua: navigator.userAgent
+    };
+    const endpoint = "/.netlify/functions/visit-alert";
+    try {
+      const ok = navigator.sendBeacon && navigator.sendBeacon(
+        endpoint,
+        new Blob([JSON.stringify(payload)], { type: "application/json" })
+      );
+      if (!ok) fetch(endpoint, {method:"POST", headers:{"Content-Type": "application/json"}, body: JSON.stringify(payload), keepalive:true});
+    } catch (e) {}
+  })();
+</script>
 </body></html>
